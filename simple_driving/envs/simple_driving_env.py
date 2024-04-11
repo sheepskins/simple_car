@@ -71,12 +71,11 @@ class SimpleDrivingEnv(gym.Env):
           self._envStepCounter += 1
 
         # Compute reward as L2 change in distance to goal
-        # dist_to_goal = math.sqrt(((car_ob[0] - self.goal[0]) ** 2 +
-                                  # (car_ob[1] - self.goal[1]) ** 2))
-        dist_to_goal = math.sqrt(((carpos[0] - goalpos[0]) ** 2 +
-                                  (carpos[1] - goalpos[1]) ** 2))
-        # reward = max(self.prev_dist_to_goal - dist_to_goal, 0)
-        reward = -dist_to_goal
+        dist_to_goal = math.sqrt(((car_ob[0] - self.goal[0]) ** 2 +
+                                  (car_ob[1] - self.goal[1]) ** 2))
+
+        reward = self.prev_dist_to_goal - dist_to_goal
+        # reward = -dist_to_goal
         self.prev_dist_to_goal = dist_to_goal
 
         # Done by reaching goal
@@ -116,10 +115,10 @@ class SimpleDrivingEnv(gym.Env):
         # Get observation to return
         carpos = self.car.get_observation()
 
+        car_ob = self.getExtendedObservation()
         self.prev_dist_to_goal = math.sqrt(((carpos[0] - self.goal[0]) ** 2 +
                                            (carpos[1] - self.goal[1]) ** 2))
-        car_ob = self.getExtendedObservation()
-        return np.array(car_ob, dtype=np.float32)
+        return car_ob
 
     def render(self, mode='human'):
         if mode == "fp_camera":
@@ -182,9 +181,9 @@ class SimpleDrivingEnv(gym.Env):
         goalpos, goalorn = self._p.getBasePositionAndOrientation(self.goal_object.goal)
         invCarPos, invCarOrn = self._p.invertTransform(carpos, carorn)
         goalPosInCar, goalOrnInCar = self._p.multiplyTransforms(invCarPos, invCarOrn, goalpos, goalorn)
-
-        observation = [goalPosInCar[0], goalPosInCar[1]]
-        return observation
+        
+        obs = [goalPosInCar[0], goalPosInCar[1]]
+        return obs
 
     def _termination(self):
         return self._envStepCounter > 2000
